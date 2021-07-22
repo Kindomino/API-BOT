@@ -18,6 +18,7 @@ def convert2(string):
 
 
 
+
 #**************************************************************************************************
 # Change the credentials in s.auth to your own redstor login ('user', 'password') to work with
 # your own redstor enviroment   
@@ -86,13 +87,17 @@ print("TOTAL ACCOUNTS ADDED: ", len(filtered_request_Accounts))
 # Grabbing required information for listing tickets and storing them in a variable
 #ZOHODESK FOR PROTOS ENVIROMENT
 #token_Refresh = "1000.fa7c3477d27a33d4e9df3441236aaf1e.24367a4034451565c64eecc13eda4d75"
-#request_RefreshToken = requests.post(f'https://accounts.zoho.com/oauth/v2/token?refresh_token={token_Refresh}&client_id=1000.C800QHYEAC2X5ONRKWESJMLL1S6V3F&client_secret=e5a46872f4e7f126e2f066a4ec30c54be6efc6c1c4&grant_type=refresh_token').json()
+#client_Id = "1000.C800QHYEAC2X5ONRKWESJMLL1S6V3F"
+#client_Secret = "e5a46872f4e7f126e2f066a4ec30c54be6efc6c1c4"
+#request_RefreshToken = requests.post(f'https://accounts.zoho.com/oauth/v2/token?refresh_token={token_Refresh}&client_id={client_Id}&client_secret={client_Secret}&grant_type=refresh_token').json()
 #token_Access = str(request_RefreshToken['access_token'])
 #headers = {'orgId': ('732503526') , 'Authorization': f'Zoho-oauthtoken {token_Access}'}
 
 #ZOHODESK FOR PERSONAL ENVIROMENT
 token_Refresh = "1000.9ee7878e462dce91ba93370cc8ae4c89.00605d5a1acbe96c72f5cebc59d385ab" # refresh token used to fetch new access token for access to zohodesk API requests, lasts forever
-request_RefreshToken = requests.post(f'https://accounts.zoho.com/oauth/v2/token?refresh_token={token_Refresh}&client_id=1000.YDOPB4JT48NG4LP3V9VPKFINZIECIR&client_secret=1498df3bd8ab23e6d9e4b7fe742c6e7e663de67919&grant_type=refresh_token').json() # API request for new access token
+client_Id = "1000.YDOPB4JT48NG4LP3V9VPKFINZIECIR" # client id used to link API request to your zohodesk enviroment
+client_Secret = "1498df3bd8ab23e6d9e4b7fe742c6e7e663de67919" # client secret used to link API request to your zohodesk enviroment
+request_RefreshToken = requests.post(f'https://accounts.zoho.com/oauth/v2/token?refresh_token={token_Refresh}&client_id={client_Id}&client_secret={client_Secret}&grant_type=refresh_token').json() # API request for access token
 token_Access = str(request_RefreshToken['access_token']) # grabbing just the access token from API request
 headers = {'orgId': ('751922355') , 'Authorization': f'Zoho-oauthtoken {token_Access}'} # headers for any further Zohodesk API requests 
 
@@ -133,10 +138,12 @@ while check_ListIsDone == False:
 
 print(" \n \n " + "***SORTING THROUGH FILTERED BACKUPS FOR FAILED BACKUPS OR BACKUPS WITH ERRORS***" + " \n \n ")
 # Sorting between failed/completed backups
+counter_countTotalExistingTickets = 0
 counter_CreatedTickets = 0 # counter for total created tickets
 counter_Redstor = 0 # counter for iterating through redstor accounts
 counter_TotalBackupsDetected = 0 # counter for total backup detected
 check_ExistingTicket = False # boolean for whether existing ticket of redstor account is found or not
+list_ExistingTickets = []
 while counter_Redstor < len(filtered_request_Accounts): # while counter is less than length of list of filtered accounts
 
     # Reset counter to run through tickets 
@@ -181,6 +188,30 @@ while counter_Redstor < len(filtered_request_Accounts): # while counter is less 
             'classification': 'Monitoring',
             'channel': 'API Bot'
             }
+    
+
+
+
+
+    #COUNTS ALL EXISTING TICKETS 
+    counter_findingTotalExistingTickets = 0
+    while counter_findingTotalExistingTickets < len(list_AllTickets): # while counter is less than length of list of tickets and if matching ticket hasn't been found yet
+        param_CellWithGuid = convert(list_AllTickets[counter_findingTotalExistingTickets]['subject']) # splits the subject of a ticket for later use to get GUID 
+        if filtered_request_Accounts[counter_Redstor]['AccountName'] == 'ACR-RRL-RODC':
+            if list_AllTickets[counter_findingTotalExistingTickets]['ticketNumber'] == '4880':
+                print (filtered_request_Accounts[counter_Redstor]['Guid'])
+                print (param_CellWithGuid[(len(param_CellWithGuid) - 1)])
+        if filtered_request_Accounts[counter_Redstor]['Guid'] == param_CellWithGuid[(len(param_CellWithGuid) - 1)]: # if redstor account guid value does not match guid value found on ticket subject
+            dict_RedstorAccount = filtered_request_Accounts[counter_Redstor]['AccountName'] # grab dictionary containing redstor account's info and put into a new dictionary 
+            list_ExistingTickets.append(dict_RedstorAccount) # add the copy of dictRedstorAccount to the list of filtered redstor accounts
+            counter_countTotalExistingTickets += 1
+            counter_findingTotalExistingTickets += 1
+        
+        else:
+            counter_findingTotalExistingTickets += 1
+
+
+
 
 
     print("ACCOUNT #", counter_Redstor + 1)
@@ -206,15 +237,15 @@ while counter_Redstor < len(filtered_request_Accounts): # while counter is less 
                 #print(counter_ZohoDesk)
 
         if counter_ZohoDesk == len(list_AllTickets) and check_ExistingTicket == False: # if every ticket has been checked and no existing ticket is found
-            #time.sleep (10)
-            #request_CreateTicket = requests.post("https://desk.zoho.com/api/v1/tickets", data = json.dumps(body), headers = headers) # send API request to zohodesk to create ticket with info found in body
+            time.sleep (10)
+            request_CreateTicket = requests.post("https://desk.zoho.com/api/v1/tickets", data = json.dumps(body), headers = headers) # send API request to zohodesk to create ticket with info found in body
             counter_CreatedTickets += 1
             print("---EXISTING TICKET NOT FOUND---")
             print(filtered_request_Accounts[counter_Redstor]['AccountName'])
             print("'TIME ELAPSED:'", value_YearsFromLastBackup, "year(s),", value_MonthsFromLastBackup, "month(s),",value_DaysFromLastBackup, "day(s)")
             print(filtered_request_Accounts[counter_Redstor]['LastBackupMessage'])
             print("TICKET CREATED")
-            #print("TICKET API REQUEST RESPONSE CODE:", request_CreateTicket)
+            print("TICKET API REQUEST RESPONSE CODE:", request_CreateTicket)
             print(" \n \n ")
 
 
@@ -250,15 +281,15 @@ while counter_Redstor < len(filtered_request_Accounts): # while counter is less 
         
         
         if counter_ZohoDesk == len(list_AllTickets) and check_ExistingTicket == False: # if every ticket has been checked and no existing ticket is found
-            #time.sleep (10)
-            #request_CreateTicket = requests.post("https://desk.zoho.com/api/v1/tickets", data = json.dumps(body), headers = headers) # send API request to zohodesk to create ticket with info found in body
+            time.sleep (10)
+            request_CreateTicket = requests.post("https://desk.zoho.com/api/v1/tickets", data = json.dumps(body), headers = headers) # send API request to zohodesk to create ticket with info found in body
             counter_CreatedTickets += 1
             print("---EXISTING TICKET NOT FOUND---")
             print(filtered_request_Accounts[counter_Redstor]['AccountName'])
             print("'TIME ELAPSED:'", value_YearsFromLastBackup, "year(s),", value_MonthsFromLastBackup, "month(s),",value_DaysFromLastBackup, "day(s)")
             print(filtered_request_Accounts[counter_Redstor]['LastBackupMessage'])
             print("TICKET CREATED")
-            #print("TICKET API REQUEST RESPONSE CODE:", request_CreateTicket)
+            print("TICKET API REQUEST RESPONSE CODE:", request_CreateTicket)
             print(" \n \n ")
 
         # if ticket update occurred
@@ -269,6 +300,6 @@ while counter_Redstor < len(filtered_request_Accounts): # while counter is less 
     
     # Iterate loop
     counter_Redstor += 1
-
-print("ACCOUNTS DETECTED:", counter_TotalBackupsDetected)
-print("TICKETS CREATED:", counter_CreatedTickets)
+print("COMPLETED WITH ERRORS/FAILED ACCOUNTS DETECTED:", counter_TotalBackupsDetected)
+print("TOTAL EXISTING TICKETS", counter_countTotalExistingTickets)
+print("NEW TICKETS CREATED:", counter_CreatedTickets)
