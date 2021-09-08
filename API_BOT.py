@@ -5,18 +5,18 @@ import pprint, time, json
 
 #***FUNCTIONS***
 # Python code to convert string to list
-def convert(string):
+def convertBySpace(string):
     li = list(string.split(" "))
     return li
 # Python code to convert backup group path to list
-def convert2(string):
+def convertByDoubleBackslash(string):
     li = list(string.split("\\"))
     return li
 # Python3 program to Split string into characters
-def convert3(word):
+def convertByChar(word):
     return [char for char in word]
 # Python code to convert days since last backup to list
-def convert4(string):
+def convertByComma(string):
     li = list(string.split(","))
     return li
 
@@ -54,7 +54,7 @@ while len(request_Accounts) == 1000:
     time.sleep(1)
     counter_AccountsAdded = 0 
     while counter_CellPositionWithinList < (len(request_Accounts)):
-        list_BackupGroup = convert2(request_Accounts[counter_CellPositionWithinList]['BackupGroup']) 
+        list_BackupGroup = convertByDoubleBackslash(request_Accounts[counter_CellPositionWithinList]['BackupGroup']) 
         length_list_BackupGroup = len(list_BackupGroup)  
         counter_BackupGroup = 0 
         check_AgencyPartner = False
@@ -75,8 +75,9 @@ while len(request_Accounts) == 1000:
         counter_CellPositionWithinList += 1
         counter_AccountsScanned += 1 
     
-    counter_CellPositionWithinList = 0 
-    param_Skip += 1000 # next 1000 redstor accounts 
+    counter_CellPositionWithinList = 0
+    # next 1000 redstor accounts  
+    param_Skip += 1000 
     print ("REDSTOR ACCOUNTS SCANNED: ", counter_AccountsScanned)
     print ("REDSTOR ACCOUNTS ADDED: ", counter_AccountsAdded)
 print("TOTAL ACCOUNTS ADDED: ", len(list_AllRedstorAccounts))
@@ -118,7 +119,8 @@ headers = {'orgId': ('732503526') , 'Authorization': f'Zoho-oauthtoken {token_Ac
 # Nothing will need to be changed in this section 
 #**************************************************************************************************
 print(" \n \n " + "***GRABBING ALL TICKETS AND PLACING THEM IN LIST***")
-param_from = 0 # from parameter in request_ListTickets API request
+# from parameter in request_ListTickets API request
+param_from = 0 
 list_AllTickets = [] # list which will hold all Zohodesk tickets 
 check_ListIsDone = False # boolean for whether all tickets have been grabbed or not
 while check_ListIsDone == False:
@@ -144,19 +146,19 @@ while check_ListIsDone == False:
 
 
 
-
-print(" \n \n " + "***SORTING THROUGH FILTERED BACKUPS FOR FAILED BACKUPS OR BACKUPS WITH ERRORS***" + " \n \n ")
 # Sorting between failed/completed backups
+print(" \n \n " + "***SORTING THROUGH FILTERED BACKUPS FOR FAILED BACKUPS OR BACKUPS WITH ERRORS***" + " \n \n ")
 counter_CountTotalExistingTickets = 0
-counter_CreatedTickets = 0 # counter for total created tickets
-counter_Redstor = 0 # counter for iterating through redstor accounts
-counter_TotalBackupsDetected = 0 # counter for total backup detected
+counter_CreatedTickets = 0 
+counter_RedstorAccount = 0 # counter for iterating through redstor accounts
+counter_TotalBackupsDetected = 0
 counter_TotalOldOrFailedBackups = 0
 counter_TotalCompletedWithErrors = 0 
 check_ExistingTicket = False # boolean for whether existing ticket of redstor account is found or not
+check_UpdatedLBM = False
 list_ExistingTickets = []
 list_OldOrFailedAccounts = []
-while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less than length of list of filtered accounts
+while counter_RedstorAccount < len(list_AllRedstorAccounts):
 
 
 
@@ -166,16 +168,17 @@ while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less th
 
 
     # Variables storing values for last backup date
-    value_LastBackupDateAndTime = list_AllRedstorAccounts[counter_Redstor]['LastBackupDate'] # Pulls date and time of last backup performed as a string value
+    value_LastBackupDateAndTime = list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupDate'] # Pulls date and time of last backup performed as a string value
     value_LastBackupYear = int(value_LastBackupDateAndTime[0:4]) # Pulls year from value_LastBackupDateAndTime as integer
-    value_LastBackupMonth = str(value_LastBackupDateAndTime[5:7]) # Pulls month from value_LastBackupDateAndTime as integer 
-    value_TempLastBackupMonth = convert3(str(value_LastBackupDateAndTime[5:7]))
+    value_LastBackupMonth = str(value_LastBackupDateAndTime[5:7]) # Pulls month from value_LastBackupDateAndTime as str 
+    value_TempLastBackupMonth = convertByChar(str(value_LastBackupDateAndTime[5:7]))
+    # Removing any unnecessary zeros from date i.e. 2001-01-05 -> 2001-1-5
     if value_TempLastBackupMonth[0] == '0':
         value_LastBackupMonth = int(value_LastBackupMonth[1])
     else:
         value_LastBackupMonth = int(value_LastBackupMonth)
     value_LastBackupDay = str(value_LastBackupDateAndTime[8:10]) # Pulls day from value_LastBackupDateAndTime as integer 
-    value_TempLastBackupDay = convert3(str(value_LastBackupDateAndTime[8:10]))
+    value_TempLastBackupDay = convertByChar(str(value_LastBackupDateAndTime[8:10]))
     if value_TempLastBackupDay[0] == '0':
         value_LastBackupDay = int(value_LastBackupDay[1])
     else:
@@ -186,14 +189,15 @@ while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less th
     # Variables storing values for todays date
     value_TodaysDate = str(date.today()) # Pulls today's date as a string
     value_TodaysYear = int(value_TodaysDate[0:4]) # Pulls year from value_TodaysDate as integer 
-    value_TodaysMonth = str(value_TodaysDate[5:7])# Pulls month from value_TodaysDate as integer 
-    value_TempTodaysMonth = convert3(str(value_TodaysDate[5:7]))
+    value_TodaysMonth = str(value_TodaysDate[5:7]) # Pulls month from value_TodaysDate as str 
+    value_TempTodaysMonth = convertByChar(str(value_TodaysDate[5:7]))
+    # Removing any unnecessary zeros from date i.e. 2001-01-05 -> 2001-1-5
     if value_TempTodaysMonth[0] == '0':
         value_TodaysMonth = int(value_TodaysMonth[1])
     else:
         value_TodaysMonth = int(value_TodaysMonth)
-    value_TodaysDay = str(value_TodaysDate[8:10])# Pulls day from value_TodaysDate as integer
-    value_TempTodaysDay = convert3(str(value_TodaysDate[8:10]))
+    value_TodaysDay = str(value_TodaysDate[8:10]) # Pulls day from value_TodaysDate as integer
+    value_TempTodaysDay = convertByChar(str(value_TodaysDate[8:10]))
     if value_TempTodaysDay[0] == '0':
         value_TodaysDay = int(value_TodaysDay[1])
     else:
@@ -222,12 +226,12 @@ while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less th
     # COPIES OF ALREADY EXISTING TICKETS.    
     #**************************************************************************************************
     # Set new variable values for redstor account information
-    account_BackupGroup = (list_AllRedstorAccounts[counter_Redstor]['BackupGroup'])
-    account_AccountName = list_AllRedstorAccounts[counter_Redstor]['AccountName']
-    account_Guid = list_AllRedstorAccounts[counter_Redstor]['Guid']
-    account_LastBackupMessage = list_AllRedstorAccounts[counter_Redstor]['LastBackupMessage']
-    value_GroupLocation = (len(convert2(account_BackupGroup))) - 1
-    account_Group = (convert2(account_BackupGroup))[value_GroupLocation]
+    account_BackupGroup = (list_AllRedstorAccounts[counter_RedstorAccount]['BackupGroup'])
+    account_AccountName = list_AllRedstorAccounts[counter_RedstorAccount]['AccountName']
+    account_Guid = list_AllRedstorAccounts[counter_RedstorAccount]['Guid']
+    account_LastBackupMessage = list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage']
+    value_GroupLocation = (len(convertByDoubleBackslash(account_BackupGroup))) - 1
+    account_Group = (convertByDoubleBackslash(account_BackupGroup))[value_GroupLocation]
     
     print(account_Group)
 
@@ -235,13 +239,13 @@ while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less th
     #COUNTS ALL EXISTING TICKETS 
     counter_findingTotalExistingTickets = 0
     while counter_findingTotalExistingTickets < len(list_AllTickets): # while counter is less than length of list of tickets and if matching ticket hasn't been found yet
-        param_CellWithGuid = convert(list_AllTickets[counter_findingTotalExistingTickets]['subject']) # splits the subject of a ticket for later use to get GUID 
-        #if list_AllRedstorAccounts[counter_Redstor]['AccountName'] == 'ACR-RRL-RODC':
+        param_CellWithGuid = convertBySpace(list_AllTickets[counter_findingTotalExistingTickets]['subject']) # splits the subject of a ticket for later use to get GUID 
+        #if list_AllRedstorAccounts[counter_RedstorAccount]['AccountName'] == 'ACR-RRL-RODC':
         #    if list_AllTickets[counter_findingTotalExistingTickets]['ticketNumber'] == '4880':
-        #        print (list_AllRedstorAccounts[counter_Redstor]['Guid'])
+        #        print (list_AllRedstorAccounts[counter_RedstorAccount]['Guid'])
         #        print (param_CellWithGuid[(len(param_CellWithGuid) - 1)])
-        if list_AllRedstorAccounts[counter_Redstor]['Guid'] == param_CellWithGuid[(len(param_CellWithGuid) - 1)]: # if redstor account guid value does not match guid value found on ticket subject
-            dict_RedstorAccount = list_AllRedstorAccounts[counter_Redstor]['AccountName'] # grab dictionary containing redstor account's info and put into a new dictionary 
+        if list_AllRedstorAccounts[counter_RedstorAccount]['Guid'] == param_CellWithGuid[(len(param_CellWithGuid) - 1)]: # if redstor account guid value does not match guid value found on ticket subject
+            dict_RedstorAccount = list_AllRedstorAccounts[counter_RedstorAccount]['AccountName'] # grab dictionary containing redstor account's info and put into a new dictionary 
             list_ExistingTickets.append(dict_RedstorAccount) # add the copy of dictRedstorAccount to the list of filtered redstor accounts
             counter_CountTotalExistingTickets += 1
             counter_findingTotalExistingTickets += 1
@@ -253,29 +257,29 @@ while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less th
 
     
 
-    print("ACCOUNT #", counter_Redstor + 1)
+    print("ACCOUNT #", counter_RedstorAccount + 1)
     print(date_Today)
     print(date_LastBackup)
     print(value_DaysFromLastBackup)
     # Checking that backup has backed up within 3 days of previous one'
-    if (value_DaysFromLastBackup == '1 day, 0:00:00' or value_DaysFromLastBackup == '2 days, 0:00:00' or value_DaysFromLastBackup == '-1 day, 0:00:00' or value_DaysFromLastBackup == '0:00:00') and (list_AllRedstorAccounts[counter_Redstor]['LastBackupMessage'] == "Completed with errors"): 
-        print(list_AllRedstorAccounts[counter_Redstor]['LastBackupMessage'])
+    if (value_DaysFromLastBackup == '1 day, 0:00:00' or value_DaysFromLastBackup == '2 days, 0:00:00' or value_DaysFromLastBackup == '-1 day, 0:00:00' or value_DaysFromLastBackup == '0:00:00') and (list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'] == "Completed with errors"): 
+        print(list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'])
         print("BACKUP COMPLETED WITH ERRORS DETECTED")
         counter_TotalBackupsDetected += 1
         counter_TotalCompletedWithErrors += 1
         # Scanning for already existing ticket for that Redstor account
         while counter_ZohoDesk < len(list_AllTickets) and check_ExistingTicket == False: # while counter is less than length of list of tickets and if matching ticket hasn't been found yet
-            param_CellWithGuid = convert(list_AllTickets[counter_ZohoDesk]['subject']) # splits the subject of a ticket for later use to get GUID 
-            if list_AllRedstorAccounts[counter_Redstor]['Guid'] == param_CellWithGuid[(len(param_CellWithGuid) - 1)]: # if redstor account guid value does not match guid value found on ticket subject
+            param_CellWithGuid = convertBySpace(list_AllTickets[counter_ZohoDesk]['subject']) # splits the subject of a ticket for later use to get GUID 
+            if list_AllRedstorAccounts[counter_RedstorAccount]['Guid'] == param_CellWithGuid[(len(param_CellWithGuid) - 1)]: # if redstor account guid value does not match guid value found on ticket subject
                 check_ExistingTicket = True # classify as existing ticket
-                print ("REDSTOR GUID:  ", list_AllRedstorAccounts[counter_Redstor]['Guid'])
+                print ("REDSTOR GUID:  ", list_AllRedstorAccounts[counter_RedstorAccount]['Guid'])
                 print ("ZOHODESK GUID: ", param_CellWithGuid[(len(param_CellWithGuid) - 1)])
                 print("***EXISTING TICKET FOUND***")
-                print(list_AllRedstorAccounts[counter_Redstor]['AccountName'])
+                print(list_AllRedstorAccounts[counter_RedstorAccount]['AccountName'])
                 print("'TIME ELAPSED:'", value_DaysFromLastBackup)
-                print(list_AllRedstorAccounts[counter_Redstor]['LastBackupMessage'])
-                    
-                if list_AllTickets[counter_Redstor]['statusType'] != 'Closed':    
+                print(list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'])
+                print(list_AllTickets[counter_RedstorAccount]['statusType'])
+                if list_AllTickets[counter_RedstorAccount]['statusType'] != 'Closed':    
                     print('UPDATING TICKET...')
 
                     # Updating API-BOT generated ticket with updated description
@@ -316,16 +320,40 @@ while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less th
             'classification': 'Monitoring',
             'channel': 'API Bot'
             }
-            counter_CreatedTickets += 1
 
+            if len(convertByChar(body_CreateTicket['subject'])) > 160:
+                check_UpdatedLBM = True
+                value_SubjectLenExceedsBy = len(convertByChar(body_CreateTicket['subject'])) - 160
+                account_NewLastBackupMessage = ''.join(convertByChar(account_LastBackupMessage)[0:len(convertByChar(account_LastBackupMessage)) - value_SubjectLenExceedsBy])
+                body_CreateTicket = {
+                'subject': f'BACKUP COMPLETED WITH ERRORS • {account_Group}/{account_AccountName} • LBM: {account_NewLastBackupMessage} • GUID: {account_Guid}',
+                'departmentId': '562761000004050121',
+                'contactId': '562761000004216013',
+                'assigneeId': '562761000000389001',
+                'email': 'drmonitoring@protostechnologiesgroup.zohodesk.com',
+                'description': f'<b>BACKUP COMPLETED WITH ERRORS DETECTED:</b><br><b>PATH:</b> {account_BackupGroup}<br><b>LAST BACKUP MESSAGE:</b> {account_LastBackupMessage}<br><b>LAST BACKUP DATE (MM/DD/YYYY):</b> {value_LastBackupMonth}-{value_LastBackupDay}-{value_LastBackupYear}',
+                #'productId': 'Redstor', 
+                'priority': 'Medium',
+                'category': 'Production',
+                'subCategory': 'Redstor',
+                'classification': 'Monitoring',
+                'channel': 'API Bot'
+                }
+
+            counter_CreatedTickets += 1
+            print ("REDSTOR GUID:  ", list_AllRedstorAccounts[counter_RedstorAccount]['Guid'])
             print("---EXISTING TICKET NOT FOUND---")
-            print(list_AllRedstorAccounts[counter_Redstor]['AccountName'])
+            print(list_AllRedstorAccounts[counter_RedstorAccount]['AccountName'])
             print("'TIME ELAPSED:'", value_DaysFromLastBackup)
-            print(list_AllRedstorAccounts[counter_Redstor]['LastBackupMessage'])
+            print(list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'])
+            if check_UpdatedLBM == True:
+                check_UpdatedLBM = False
+                print("LAST BACKUP MESSAGE UPDATED")
             print("TICKET IS BEING CREATED...")
             time.sleep (10)
             request_CreateTicket = requests.post("https://desk.zoho.com/api/v1/tickets", data = json.dumps(body_CreateTicket), headers = headers) # send API request to zohodesk to create ticket with info found in body
             print("TICKET API REQUEST RESPONSE CODE:", request_CreateTicket)
+            pprint.pprint(body_CreateTicket)
             print(" \n \n ")
 
         # if ticket update occurred
@@ -336,27 +364,27 @@ while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less th
 
 
 
-    #if  (value_YearsFromLastBackup != 0 or value_MonthsFromLastBackup != 0 or value_DaysFromLastBackup >= 3) and ((list_AllRedstorAccounts[counter_Redstor]['LastBackupMessage'] == "Successful") or (list_AllRedstorAccounts[counter_Redstor]['LastBackupMessage'] == "Completed with errors"))
+    #if  (value_YearsFromLastBackup != 0 or value_MonthsFromLastBackup != 0 or value_DaysFromLastBackup >= 3) and ((list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'] == "Successful") or (list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'] == "Completed with errors"))
     # Checking that backups not completed for more than 3 days of previous one and last backup message 'Successful'
     if value_DaysFromLastBackup != '1 day, 0:00:00' and value_DaysFromLastBackup != '2 days, 0:00:00' and value_DaysFromLastBackup != '-1 day, 0:00:00' and value_DaysFromLastBackup != '0:00:00': 
         print("OLD/FAILED BACKUP DETECTED")
-        dict_OldOrFailedBackupAccountName = list_AllRedstorAccounts[counter_Redstor]['AccountName'] # grab dictionary containing redstor account's info and put into a new dictionary 
+        dict_OldOrFailedBackupAccountName = list_AllRedstorAccounts[counter_RedstorAccount]['AccountName'] # grab dictionary containing redstor account's info and put into a new dictionary 
         list_OldOrFailedAccounts.append(dict_OldOrFailedBackupAccountName)
         counter_TotalBackupsDetected += 1
         counter_TotalOldOrFailedBackups += 1
         # Scanning for already existing ticket for that Redstor account
         while counter_ZohoDesk < len(list_AllTickets) and check_ExistingTicket == False: # while counter is less than length of list of tickets and if matching ticket hasn't been found yet
-            param_CellWithGuid = convert(list_AllTickets[counter_ZohoDesk]['subject']) # splits the subject of a ticket for later use to get GUID
-            if list_AllRedstorAccounts[counter_Redstor]['Guid'] == param_CellWithGuid[(len(param_CellWithGuid) - 1)]: # if redstor account guid value does not match guid value found on ticket subject
+            param_CellWithGuid = convertBySpace(list_AllTickets[counter_ZohoDesk]['subject']) # splits the subject of a ticket for later use to get GUID
+            if list_AllRedstorAccounts[counter_RedstorAccount]['Guid'] == param_CellWithGuid[(len(param_CellWithGuid) - 1)]: # if redstor account guid value does not match guid value found on ticket subject
                 check_ExistingTicket = True # classify as existing ticket
-                print ("REDSTOR GUID:  ", list_AllRedstorAccounts[counter_Redstor]['Guid'])
+                print ("REDSTOR GUID:  ", list_AllRedstorAccounts[counter_RedstorAccount]['Guid'])
                 print ("ZOHODESK GUID: ", param_CellWithGuid[(len(param_CellWithGuid) - 1)])
                 print("***EXISTING TICKET FOUND***")
-                print(list_AllRedstorAccounts[counter_Redstor]['AccountName'])
+                print(list_AllRedstorAccounts[counter_RedstorAccount]['AccountName'])
                 print("'TIME ELAPSED:'", value_DaysFromLastBackup)
-                print(list_AllRedstorAccounts[counter_Redstor]['LastBackupMessage'])
-                    
-                if list_AllTickets[counter_Redstor]['statusType'] != 'Closed':    
+                print(list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'])
+                print(list_AllTickets[counter_RedstorAccount]['statusType'])
+                if list_AllTickets[counter_RedstorAccount]['statusType'] != 'Closed':    
                     print('UPDATING TICKET...')
                     
                     # Updating API-BOT generated ticket with updated description and comment 
@@ -371,7 +399,7 @@ while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less th
                     #if param_CellWithGuid[0] == '*API-BOT*':
                     body_CreateComment = {
                     "isPublic" : "false",
-                    "content" : f'<b>OLD/FAILED BACKUP DETECTED:</b><br><b>PATH:</b> {account_BackupGroup}<br><b>LAST BACKUP MESSAGE:</b> {account_LastBackupMessage}<br><b>LAST BACKUP DATE (MM/DD/YYYY):</b> {value_LastBackupMonth}-{value_LastBackupDay}-{value_LastBackupYear}<br><b>TIME SINCE LAST BACKUP:</b> {(convert4(value_DaysFromLastBackup))[0]}'
+                    "content" : f'<b>OLD/FAILED BACKUP DETECTED:</b><br><b>PATH:</b> {account_BackupGroup}<br><b>LAST BACKUP MESSAGE:</b> {account_LastBackupMessage}<br><b>LAST BACKUP DATE (MM/DD/YYYY):</b> {value_LastBackupMonth}-{value_LastBackupDay}-{value_LastBackupYear}<br><b>TIME SINCE LAST BACKUP:</b> {(convertByComma(value_DaysFromLastBackup))[0]}'
                     }
                     param_TicketId = list_AllTickets[counter_ZohoDesk]['id']
                     request_CreateComment = requests.post(f"https://desk.zoho.com/api/v1/tickets/{param_TicketId}/comments", data = json.dumps(body_CreateComment), headers = headers)
@@ -388,7 +416,7 @@ while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less th
             'contactId': '562761000004216013',
             'assigneeId': '562761000000389001',
             'email': 'drmonitoring@protostechnologiesgroup.zohodesk.com',
-            'description': f'<b>OLD/FAILED BACKUP DETECTED:</b><br><b>PATH:</b> {account_BackupGroup}<br><b>LAST BACKUP MESSAGE:</b> {account_LastBackupMessage}<br><b>LAST BACKUP DATE (MM/DD/YYYY):</b> {value_LastBackupMonth}-{value_LastBackupDay}-{value_LastBackupYear}<br><b>TIME SINCE LAST BACKUP:</b> {(convert4(value_DaysFromLastBackup))[0]}',
+            'description': f'<b>OLD/FAILED BACKUP DETECTED:</b><br><b>PATH:</b> {account_BackupGroup}<br><b>LAST BACKUP MESSAGE:</b> {account_LastBackupMessage}<br><b>LAST BACKUP DATE (MM/DD/YYYY):</b> {value_LastBackupMonth}-{value_LastBackupDay}-{value_LastBackupYear}<br><b>TIME SINCE LAST BACKUP:</b> {(convertByComma(value_DaysFromLastBackup))[0]}',
             #'productId': 'Redstor', 
             'priority': 'Medium',
             'category': 'Production',
@@ -397,15 +425,39 @@ while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less th
             'channel': 'API Bot'
             }
             
+            if len(convertByChar(body_CreateTicket['subject'])) > 160:
+                check_UpdatedLBM = True
+                value_SubjectLenExceedsBy = len(convertByChar(body_CreateTicket['subject'])) - 160
+                account_NewLastBackupMessage = ''.join(convertByChar(account_LastBackupMessage)[0:len(convertByChar(account_LastBackupMessage)) - value_SubjectLenExceedsBy])
+                body_CreateTicket = {
+                'subject': f'OLD/FAILED BACKUP • {account_Group}/{account_AccountName} • LBM: {account_NewLastBackupMessage} • GUID: {account_Guid}',
+                'departmentId': '562761000004050121',
+                'contactId': '562761000004216013',
+                'assigneeId': '562761000000389001',
+                'email': 'drmonitoring@protostechnologiesgroup.zohodesk.com',
+                'description': f'<b>OLD/FAILED BACKUP DETECTED:</b><br><b>PATH:</b> {account_BackupGroup}<br><b>LAST BACKUP MESSAGE:</b> {account_LastBackupMessage}<br><b>LAST BACKUP DATE (MM/DD/YYYY):</b> {value_LastBackupMonth}-{value_LastBackupDay}-{value_LastBackupYear}',
+                #'productId': 'Redstor', 
+                'priority': 'Medium',
+                'category': 'Production',
+                'subCategory': 'Redstor',
+                'classification': 'Monitoring',
+                'channel': 'API Bot'
+                }
+
             counter_CreatedTickets += 1
+            print ("REDSTOR GUID:  ", list_AllRedstorAccounts[counter_RedstorAccount]['Guid'])
             print("---EXISTING TICKET NOT FOUND---")
-            print(list_AllRedstorAccounts[counter_Redstor]['AccountName'])
+            print(list_AllRedstorAccounts[counter_RedstorAccount]['AccountName'])
             print("'TIME ELAPSED:'", value_DaysFromLastBackup)
-            print(list_AllRedstorAccounts[counter_Redstor]['LastBackupMessage'])
+            print(list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'])
+            if check_UpdatedLBM == True:
+                check_UpdatedLBM = False
+                print("LAST BACKUP MESSAGE UPDATED")
             print("TICKET IS BEING CREATED...")
             time.sleep (10)
             request_CreateTicket = requests.post("https://desk.zoho.com/api/v1/tickets", data = json.dumps(body_CreateTicket), headers = headers) # send API request to zohodesk to create ticket with info found in body
             print("TICKET API REQUEST RESPONSE CODE:", request_CreateTicket)
+            pprint.pprint(body_CreateTicket)
             print(" \n \n ")
             
 
@@ -415,8 +467,7 @@ while counter_Redstor < len(list_AllRedstorAccounts): # while counter is less th
             
     
     
-    # Iterate loop
-    counter_Redstor += 1
+    counter_RedstorAccount += 1
 print("COMPLETED WITH ERRORS/FAILED ACCOUNTS DETECTED:", counter_TotalBackupsDetected)
 print("COMPLETED WITH ERRORS DETECTED: ", counter_TotalCompletedWithErrors)
 print("OLD OR FAILED BACKUPS DETECTED: ", counter_TotalOldOrFailedBackups)
