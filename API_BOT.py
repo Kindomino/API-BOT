@@ -51,7 +51,7 @@ counter_CellPositionWithinList = 0
 list_AllRedstorAccounts = [] 
 while len(request_Accounts) == 1000: 
     request_Accounts = s.get(f'https://api.pro.redstor.com/api/odata/Accounts?$skip={param_Skip}').json()['value'] 
-    time.sleep(1)
+    time.sleep(10)
     counter_AccountsAdded = 0 
     while counter_CellPositionWithinList < (len(request_Accounts)):
         list_BackupGroup = convertByDoubleBackslash(request_Accounts[counter_CellPositionWithinList]['BackupGroup']) 
@@ -103,13 +103,20 @@ request_RefreshToken = requests.post(f'https://accounts.zoho.com/oauth/v2/token?
 token_Access = str(request_RefreshToken['access_token'])
 headers = {'orgId': ('732503526') , 'Authorization': f'Zoho-oauthtoken {token_Access}'}
 
-#ZOHODESK FOR PERSONAL ENVIROMENT
-#token_Refresh = "1000.9ee7878e462dce91ba93370cc8ae4c89.00605d5a1acbe96c72f5cebc59d385ab" # refresh token used to fetch new access token for access to zohodesk API requests, lasts forever
-#client_Id = "1000.YDOPB4JT48NG4LP3V9VPKFINZIECIR" # client id used to link API request to your zohodesk enviroment
-#client_Secret = "1498df3bd8ab23e6d9e4b7fe742c6e7e663de67919" # client secret used to link API request to your zohodesk enviroment
-#request_RefreshToken = requests.post(f'https://accounts.zoho.com/oauth/v2/token?refresh_token={token_Refresh}&client_id={client_Id}&client_secret={client_Secret}&grant_type=refresh_token').json() # API request for access token
-#token_Access = str(request_RefreshToken['access_token']) # grabbing just the access token from API request
-#headers = {'orgId': ('751922355') , 'Authorization': f'Zoho-oauthtoken {token_Access}'} # headers for any further Zohodesk API requests 
+# ZOHODESK FOR PERSONAL ENVIROMENT
+# refresh token used to fetch new access token for access to zohodesk API requests, lasts forever
+#token_Refresh = "1000.9ee7878e462dce91ba93370cc8ae4c89.00605d5a1acbe96c72f5cebc59d385ab"
+# client id used to link API request to your zohodesk enviroment
+#client_Id = "1000.YDOPB4JT48NG4LP3V9VPKFINZIECIR"
+# client secret used to link API request to your zohodesk enviroment
+#client_Secret = "1498df3bd8ab23e6d9e4b7fe742c6e7e663de67919"
+# API request for access token
+#request_RefreshToken = requests.post(f'https://accounts.zoho.com/oauth/v2/token?refresh_token={token_Refresh}&client_id={client_Id}&client_secret={client_Secret}&grant_type=refresh_token').json() 
+# grabbing just the access token from API request
+#token_Access = str(request_RefreshToken['access_token'])
+# headers for any further Zohodesk API requests
+#headers = {'orgId': ('751922355') , 'Authorization': f'Zoho-oauthtoken {token_Access}'}
+
 
 
 
@@ -346,6 +353,7 @@ while counter_RedstorAccount < len(list_AllRedstorAccounts):
             print(list_AllRedstorAccounts[counter_RedstorAccount]['AccountName'])
             print("'TIME ELAPSED:'", value_DaysFromLastBackup)
             print(list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'])
+            print("LAST BACKUP MESSAGE LENGTH: ", len(convertByChar(body_CreateTicket['subject'])))
             if check_UpdatedLBM == True:
                 check_UpdatedLBM = False
                 print("LAST BACKUP MESSAGE UPDATED")
@@ -450,6 +458,7 @@ while counter_RedstorAccount < len(list_AllRedstorAccounts):
             print(list_AllRedstorAccounts[counter_RedstorAccount]['AccountName'])
             print("'TIME ELAPSED:'", value_DaysFromLastBackup)
             print(list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'])
+            print("LAST BACKUP MESSAGE LENGTH: ", len(convertByChar(body_CreateTicket['subject'])))
             if check_UpdatedLBM == True:
                 check_UpdatedLBM = False
                 print("LAST BACKUP MESSAGE UPDATED")
