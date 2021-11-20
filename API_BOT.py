@@ -47,7 +47,10 @@ print ("***FILTERING REDSTOR ACCOUNTS***")
 request_Accounts = s.get('https://api.pro.redstor.com/api/odata/Accounts').json()['value']
 param_Skip = 0
 counter_AccountsScanned = 0
-counter_CellPositionWithinList = 0 
+counter_CellPositionWithinList = 0
+counter_AgencyPartners = 0
+counter_VSG = 0
+counter_S4iSystems = 0 
 list_AllRedstorAccounts = [] 
 while len(request_Accounts) == 1000: 
     request_Accounts = s.get(f'https://api.pro.redstor.com/api/odata/Accounts?$skip={param_Skip}').json()['value'] 
@@ -55,22 +58,38 @@ while len(request_Accounts) == 1000:
     counter_AccountsAdded = 0 
     while counter_CellPositionWithinList < (len(request_Accounts)):
         list_BackupGroup = convertByDoubleBackslash(request_Accounts[counter_CellPositionWithinList]['BackupGroup']) 
-        length_list_BackupGroup = len(list_BackupGroup)  
+        length_list_BackupGroup = len(list_BackupGroup)
+        # scans through redstor account path for agency partners  
         counter_BackupGroup = 0 
         check_AgencyPartner = False
-        # scans through redstor account path 
         while counter_BackupGroup < length_list_BackupGroup: 
             if list_BackupGroup[counter_BackupGroup] == 'Agency Partners' and check_AgencyPartner == False: # LINE OF CODE WITHIN DOCUMENTATION ABOVE, checks if within path 'Agency Partners' is found
                 check_AgencyPartner = True 
-
+                counter_AgencyPartners += 1
             counter_BackupGroup += 1
-            
+        # scans through redstor account path for vsg
+        counter_BackupGroup = 0
+        check_VSG = False
+        while counter_BackupGroup < length_list_BackupGroup: 
+            if list_BackupGroup[counter_BackupGroup] == 'VSG' and check_VSG == False: # LINE OF CODE WITHIN DOCUMENTATION ABOVE, checks if within path 'Agency Partners' is found
+                check_VSG = True
+                counter_VSG += 1
+            counter_BackupGroup += 1
+        # scans through redstor account path for s4i
+        counter_BackupGroup = 0
+        check_S4iSystems = False
+        while counter_BackupGroup < length_list_BackupGroup: 
+            if list_BackupGroup[counter_BackupGroup] == 'S4i Systems' and check_S4iSystems == False: # LINE OF CODE WITHIN DOCUMENTATION ABOVE, checks if within path 'Agency Partners' is found
+                check_S4iSystems = True
+                counter_S4iSystems += 1 
+            counter_BackupGroup += 1     
         # checks if redstor account in question is an agency partner and classified as active
-        if check_AgencyPartner == True and request_Accounts[counter_CellPositionWithinList]['Active'] == True and request_Accounts[counter_CellPositionWithinList]['LastBackupDate'] is not None:
+        if (check_AgencyPartner == True or check_VSG == True or check_S4iSystems == True) and request_Accounts[counter_CellPositionWithinList]['Active'] == True and request_Accounts[counter_CellPositionWithinList]['LastBackupDate'] is not None:
             dict_RedstorAccount = request_Accounts[counter_CellPositionWithinList]
-            dict_copy = dict_RedstorAccount.copy() 
-            list_AllRedstorAccounts.append(dict_copy) 
+            copy_RedstorAccount = dict_RedstorAccount.copy() 
+            list_AllRedstorAccounts.append(copy_RedstorAccount) 
             counter_AccountsAdded += 1
+
         
         counter_CellPositionWithinList += 1
         counter_AccountsScanned += 1 
@@ -81,6 +100,10 @@ while len(request_Accounts) == 1000:
     print ("REDSTOR ACCOUNTS SCANNED: ", counter_AccountsScanned)
     print ("REDSTOR ACCOUNTS ADDED: ", counter_AccountsAdded)
 print("TOTAL ACCOUNTS ADDED: ", len(list_AllRedstorAccounts))
+print("TOTAL AGENCY PARTNER ACCOUNTS ADDED: ", counter_AgencyPartners)
+print("TOTAL VSG ACCOUNTS ADDED: ", counter_VSG)
+print("TOTAL S4I SYSTEMS ACCOUNTS ADDED: ", counter_S4iSystems)
+
 
 
 
@@ -96,27 +119,26 @@ print("TOTAL ACCOUNTS ADDED: ", len(list_AllRedstorAccounts))
 # Grabbing required information for listing tickets and storing them in a variable
 
 #ZOHODESK FOR PROTOS ENVIROMENT
+# refresh token used to fetch new access token for access to zohodesk API requests, lasts forever
 token_Refresh = "1000.fa7c3477d27a33d4e9df3441236aaf1e.24367a4034451565c64eecc13eda4d75"
+# client id used to link API request to your zohodesk enviroment
 client_Id = "1000.C800QHYEAC2X5ONRKWESJMLL1S6V3F"
+# client secret used to link API request to your zohodesk enviroment
 client_Secret = "e5a46872f4e7f126e2f066a4ec30c54be6efc6c1c4"
+# API request for access token
 request_RefreshToken = requests.post(f'https://accounts.zoho.com/oauth/v2/token?refresh_token={token_Refresh}&client_id={client_Id}&client_secret={client_Secret}&grant_type=refresh_token').json()
+# grabbing just the access token from API request
 token_Access = str(request_RefreshToken['access_token'])
+# headers for any further Zohodesk API requests
 headers = {'orgId': ('732503526') , 'Authorization': f'Zoho-oauthtoken {token_Access}'}
 
-# ZOHODESK FOR PERSONAL ENVIROMENT
-# refresh token used to fetch new access token for access to zohodesk API requests, lasts forever
-#token_Refresh = "1000.9ee7878e462dce91ba93370cc8ae4c89.00605d5a1acbe96c72f5cebc59d385ab"
-# client id used to link API request to your zohodesk enviroment
-#client_Id = "1000.YDOPB4JT48NG4LP3V9VPKFINZIECIR"
-# client secret used to link API request to your zohodesk enviroment
-#client_Secret = "1498df3bd8ab23e6d9e4b7fe742c6e7e663de67919"
-# API request for access token
-#request_RefreshToken = requests.post(f'https://accounts.zoho.com/oauth/v2/token?refresh_token={token_Refresh}&client_id={client_Id}&client_secret={client_Secret}&grant_type=refresh_token').json() 
-# grabbing just the access token from API request
-#token_Access = str(request_RefreshToken['access_token'])
-# headers for any further Zohodesk API requests
-#headers = {'orgId': ('751922355') , 'Authorization': f'Zoho-oauthtoken {token_Access}'}
-
+#ZOHODESK FOR PERSONAL ENVIROMENT
+#token_Refresh = "1000.9ee7878e462dce91ba93370cc8ae4c89.00605d5a1acbe96c72f5cebc59d385ab" # refresh token used to fetch new access token for access to zohodesk API requests, lasts forever
+#client_Id = "1000.YDOPB4JT48NG4LP3V9VPKFINZIECIR" # client id used to link API request to your zohodesk enviroment
+#client_Secret = "1498df3bd8ab23e6d9e4b7fe742c6e7e663de67919" # client secret used to link API request to your zohodesk enviroment
+#request_RefreshToken = requests.post(f'https://accounts.zoho.com/oauth/v2/token?refresh_token={token_Refresh}&client_id={client_Id}&client_secret={client_Secret}&grant_type=refresh_token').json() # API request for access token
+#token_Access = str(request_RefreshToken['access_token']) # grabbing just the access token from API request
+#headers = {'orgId': ('751922355') , 'Authorization': f'Zoho-oauthtoken {token_Access}'} # headers for any further Zohodesk API requests 
 
 
 
@@ -277,7 +299,7 @@ while counter_RedstorAccount < len(list_AllRedstorAccounts):
         # Scanning for already existing ticket for that Redstor account
         while counter_ZohoDesk < len(list_AllTickets) and check_ExistingTicket == False: # while counter is less than length of list of tickets and if matching ticket hasn't been found yet
             param_CellWithGuid = convertBySpace(list_AllTickets[counter_ZohoDesk]['subject']) # splits the subject of a ticket for later use to get GUID 
-            if list_AllRedstorAccounts[counter_RedstorAccount]['Guid'] == param_CellWithGuid[(len(param_CellWithGuid) - 1)]: # if redstor account guid value does not match guid value found on ticket subject
+            if list_AllRedstorAccounts[counter_RedstorAccount]['Guid'] == param_CellWithGuid[(len(param_CellWithGuid) - 1)]: # if redstor account guid value does match guid value found on ticket subject
                 check_ExistingTicket = True # classify as existing ticket
                 print ("REDSTOR GUID:  ", list_AllRedstorAccounts[counter_RedstorAccount]['Guid'])
                 print ("ZOHODESK GUID: ", param_CellWithGuid[(len(param_CellWithGuid) - 1)])
@@ -285,8 +307,8 @@ while counter_RedstorAccount < len(list_AllRedstorAccounts):
                 print(list_AllRedstorAccounts[counter_RedstorAccount]['AccountName'])
                 print("'TIME ELAPSED:'", value_DaysFromLastBackup)
                 print(list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'])
-                print(list_AllTickets[counter_RedstorAccount]['statusType'])
-                if list_AllTickets[counter_RedstorAccount]['statusType'] != 'Closed':    
+                print(list_AllTickets[counter_ZohoDesk]['status'])
+                if list_AllTickets[counter_ZohoDesk]['status'] != 'Closed':    
                     print('UPDATING TICKET...')
 
                     # Updating API-BOT generated ticket with updated description
@@ -307,6 +329,10 @@ while counter_RedstorAccount < len(list_AllRedstorAccounts):
                     request_CreateComment = requests.post(f"https://desk.zoho.com/api/v1/tickets/{param_TicketId}/comments", data = json.dumps(body_CreateComment), headers = headers)
                     print("CREATE COMMENT API REQUEST RESPONSE CODE:", request_CreateComment)
                     print(" \n \n ")
+                if list_AllTickets[counter_ZohoDesk]['status'] == 'Closed':
+                    check_ExistingTicket = False
+                    print('~~~~~EXISTING CLOSED TICKET DETECTED~~~~~')
+                    counter_ZohoDesk += 1
 
             else:
                 counter_ZohoDesk += 1 # iterate counter to scan next ticket
@@ -383,7 +409,7 @@ while counter_RedstorAccount < len(list_AllRedstorAccounts):
         # Scanning for already existing ticket for that Redstor account
         while counter_ZohoDesk < len(list_AllTickets) and check_ExistingTicket == False: # while counter is less than length of list of tickets and if matching ticket hasn't been found yet
             param_CellWithGuid = convertBySpace(list_AllTickets[counter_ZohoDesk]['subject']) # splits the subject of a ticket for later use to get GUID
-            if list_AllRedstorAccounts[counter_RedstorAccount]['Guid'] == param_CellWithGuid[(len(param_CellWithGuid) - 1)]: # if redstor account guid value does not match guid value found on ticket subject
+            if list_AllRedstorAccounts[counter_RedstorAccount]['Guid'] == param_CellWithGuid[(len(param_CellWithGuid) - 1)]: # if redstor account guid value does match guid value found on ticket subject
                 check_ExistingTicket = True # classify as existing ticket
                 print ("REDSTOR GUID:  ", list_AllRedstorAccounts[counter_RedstorAccount]['Guid'])
                 print ("ZOHODESK GUID: ", param_CellWithGuid[(len(param_CellWithGuid) - 1)])
@@ -391,8 +417,8 @@ while counter_RedstorAccount < len(list_AllRedstorAccounts):
                 print(list_AllRedstorAccounts[counter_RedstorAccount]['AccountName'])
                 print("'TIME ELAPSED:'", value_DaysFromLastBackup)
                 print(list_AllRedstorAccounts[counter_RedstorAccount]['LastBackupMessage'])
-                print(list_AllTickets[counter_RedstorAccount]['statusType'])
-                if list_AllTickets[counter_RedstorAccount]['statusType'] != 'Closed':    
+                print(list_AllTickets[counter_ZohoDesk]['status'])
+                if list_AllTickets[counter_ZohoDesk]['status'] != 'Closed':    
                     print('UPDATING TICKET...')
                     
                     # Updating API-BOT generated ticket with updated description and comment 
@@ -413,6 +439,11 @@ while counter_RedstorAccount < len(list_AllRedstorAccounts):
                     request_CreateComment = requests.post(f"https://desk.zoho.com/api/v1/tickets/{param_TicketId}/comments", data = json.dumps(body_CreateComment), headers = headers)
                     print("CREATE COMMENT API REQUEST RESPONSE CODE:", request_CreateComment)
                     print(" \n \n ")
+                if list_AllTickets[counter_ZohoDesk]['status'] == 'Closed':
+                    check_ExistingTicket = False
+                    print('~~~~~EXISTING CLOSED TICKET DETECTED~~~~~')
+                    counter_ZohoDesk += 1
+
             else:
                 counter_ZohoDesk += 1 # iterate counter to scan next ticket
         
